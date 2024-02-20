@@ -1,0 +1,16 @@
+{
+  "name": "com.rickit.table",
+  "displayName": "RicKit Table",
+  "author": {
+    "name": "LYQ"
+  },
+  "version": "1.0.0",
+  "unity": "2018.4",
+  "description": "RicKit Table, CSV, ScriptableObject",
+  "repository": {
+    "url": "https://github.com/rickytheoldtree/com.rickit.table.git",
+    "type": "git"
+  },
+  "dependencies": {
+  }
+}
