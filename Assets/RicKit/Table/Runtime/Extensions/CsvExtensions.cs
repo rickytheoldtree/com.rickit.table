@@ -11,11 +11,11 @@ namespace RicKit.Table.Extensions
             var lines = new List<string>
             {
                 // 添加表名
-                "#" + table.tableName
+                "#" + ConvertToCsvField(table.tableName)
             };
 
             // 添加列头和列类型
-            var headerLine = "#," + string.Join(",", table.columnInfos.Values.Select(c => c.name));
+            var headerLine = "#," + string.Join(",", table.columnInfos.Values.Select(c => ConvertToCsvField(c.name)));
             var typeLine = "#," + string.Join(",", table.columnInfos.Values.Select(c => c.type));
             lines.Add(headerLine);
             lines.Add(typeLine);
@@ -24,7 +24,8 @@ namespace RicKit.Table.Extensions
             foreach (var row in table.rowsData)
             {
                 var rowData = table.columnInfos.Keys.Select(index =>
-                    row.ContainsKey(table.columnInfos[index].name) ? row[table.columnInfos[index].name].ToString() : "");
+                    row.ContainsKey(table.columnInfos[index].name) ? 
+                        ConvertToCsvField(row[table.columnInfos[index].name].ToString()) : "");
                 lines.Add($",{string.Join(",", rowData)}");
             }
 
@@ -41,7 +42,7 @@ namespace RicKit.Table.Extensions
 
             for (var lineIndex = 0; lineIndex < lines.Length; lineIndex++)
             {
-                var columns = lines[lineIndex].Split(',');
+                var columns = ParseCsvLine(lines[lineIndex]);
 
                 if (lineIndex == 0 && columns[0].StartsWith("#"))
                 {
@@ -50,7 +51,7 @@ namespace RicKit.Table.Extensions
                 }
                 else if (tableNameFound && !headersFound)
                 {
-                    for (var i = 0; i < columns.Length; i++)
+                    for (var i = 0; i < columns.Count; i++)
                     {
                         var str = columns[i].Trim();
                         if (str.StartsWith("#"))
@@ -68,7 +69,7 @@ namespace RicKit.Table.Extensions
                 }
                 else if (headersFound && !typesFound)
                 {
-                    for (var i = 0; i < columns.Length; i++)
+                    for (var i = 0; i < columns.Count; i++)
                     {
                         if (table.columnInfos.ContainsKey(i))
                         {
@@ -90,6 +91,82 @@ namespace RicKit.Table.Extensions
                 }
             }
             return table;
+        }
+
+        private static string ConvertToCsvField(string field)
+        {
+            // 检查是否需要将字段用双引号包围：字段中包含逗号、换行符或双引号
+            bool requiresQuotes = field.Contains(",") || field.Contains("\n") || field.Contains("\"");
+
+            // 对字段中的双引号进行转义（替换为两个双引号）
+            string escapedField = field.Replace("\"", "\"\"");
+
+            // 如果需要，将转义后的字段用双引号包围
+            if (requiresQuotes)
+            {
+                escapedField = $"\"{escapedField}\"";
+            }
+
+            return escapedField;
+        }
+
+        private static List<string> ParseCsvLine(string line)
+        {
+            var fields = new List<string>();
+            var currentField = "";
+            var insideQuotes = false;
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                char c = line[i];
+
+                if (c == '"')
+                {
+                    if (insideQuotes)
+                    {
+                        if (i < line.Length - 1 && line[i + 1] == '"')
+                        {
+                            // 双引号转义
+                            currentField += '"';
+                            i++;
+                        }
+                        else
+                        {
+                            // 结束引号
+                            insideQuotes = false;
+                        }
+                    }
+                    else
+                    {
+                        // 开始引号
+                        insideQuotes = true;
+                    }
+                }
+                else if (c == ',')
+                {
+                    if (insideQuotes)
+                    {
+                        // 逗号在引号内部，是字段的一部分
+                        currentField += c;
+                    }
+                    else
+                    {
+                        // 逗号在引号外部，表示字段结束
+                        fields.Add(currentField);
+                        currentField = "";
+                    }
+                }
+                else
+                {
+                    // 普通字符，添加到当前字段
+                    currentField += c;
+                }
+            }
+
+            // 添加最后一个字段
+            fields.Add(currentField);
+
+            return fields;
         }
     }
 }

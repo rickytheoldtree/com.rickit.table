@@ -19,16 +19,14 @@ namespace RicKit.Table.Extensions.Editor
 
         private int currentPage = 1;
         private const int RowsPerPage = 20; // 每页显示的行数，根据需要调整
-        private int totalRows; // 总行数
         private int totalPages; // 总页数
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            
             EditorGUILayout.PropertyField(tableName);
             EditorGUILayout.PropertyField(columnInfos, true);
-            
+
             //根据columnInfos绘制表头
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PrefixLabel(" ");
@@ -45,18 +43,17 @@ namespace RicKit.Table.Extensions.Editor
                     GUILayout.ExpandWidth(true));
             }
 
-            if (GUILayout.Button("", GUILayout.Width(20)))
+            if (columnInfos.arraySize > 0 && GUILayout.Button("", GUILayout.Width(20)))
             {
             }
             EditorGUILayout.EndHorizontal();
             
             // 计算总页数
-            totalRows = rows.arraySize;
-            totalPages = (totalRows + RowsPerPage - 1) / RowsPerPage;
+            totalPages = (rows.arraySize + RowsPerPage - 1) / RowsPerPage;
 
             // 绘制当前页的行
             var startRow = (currentPage - 1) * RowsPerPage;
-            var endRow = Mathf.Min(startRow + RowsPerPage, totalRows);
+            var endRow = Mathf.Min(startRow + RowsPerPage, rows.arraySize);
             for (var i = startRow; i < endRow; i++)
             {
                 EditorGUILayout.BeginHorizontal();
@@ -101,8 +98,9 @@ namespace RicKit.Table.Extensions.Editor
             if (GUILayout.Button("Add Row"))
             {
                 //跳到最后一页
-                currentPage = totalPages;
                 rows.arraySize++;
+                totalPages = (rows.arraySize + RowsPerPage - 1) / RowsPerPage;
+                currentPage = Mathf.Max(1, totalPages);
                 var newRow = rows.GetArrayElementAtIndex(rows.arraySize - 1);
                 var values = newRow.FindPropertyRelative("values");
                 values.arraySize = columnInfos.arraySize;
