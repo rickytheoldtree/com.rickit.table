@@ -49,9 +49,9 @@ namespace RicKit.Table
             switch (type)
             {
                 case ColumnType.Int:
-                    return int.Parse(value);
+                    return int.TryParse(value, out var intValue) ? intValue : 0;
                 case ColumnType.Float:
-                    return float.Parse(value, CultureInfo.InvariantCulture);
+                    return float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var floatValue) ? floatValue : 0f;
                 case ColumnType.String:
                     return value;
                 default:
